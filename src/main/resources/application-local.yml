@@ -1,0 +1,5 @@
+---
+smallworldfs:
+  observability:
+    tracing:
+      sampling-rate: 0

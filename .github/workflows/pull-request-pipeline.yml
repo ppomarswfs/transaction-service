@@ -1,0 +1,17 @@
+name: PR Builder pipeline
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: "Build"
+    uses: mastermindattack/maven-build-workflow/.github/workflows/maven-build-workflow.yml@v1.0.18
+    with:
+      building-block-name: "transaction-service"
+      build-type: "pull-request"
+    secrets:
+      automation-github-pat: ${{ secrets.AUTOMATION_GITHUB_PAT }}
+      codacy-account-api-token: ${{ secrets.CODACY_ACCOUNT_API_TOKEN }}

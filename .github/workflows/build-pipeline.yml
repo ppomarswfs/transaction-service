@@ -1,0 +1,45 @@
+name: Build pipeline
+
+on:
+  push:
+    paths-ignore:
+      - 'kustomize/**'
+      - '.github/**'
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: "Build"
+    uses: mastermindattack/maven-build-workflow/.github/workflows/maven-build-workflow.yml@v1.0.18
+    with:
+      building-block-name: "transaction-service"
+    secrets:
+      automation-github-pat: ${{ secrets.AUTOMATION_GITHUB_PAT }}
+      codacy-account-api-token: ${{ secrets.CODACY_ACCOUNT_API_TOKEN }}
+
+  dev-deployment:
+    name: "Dev"
+    uses: mastermindattack/argocd-deploy-workflow/.github/workflows/argocd-deploy-workflow.yml@v1.0.6
+    needs: build
+    with:
+      building-block-name: "transaction-service"
+      artifact-version: ${{needs.build.outputs.artifact-version}}
+      environment: dev
+      validate-deployment: false
+    secrets:
+      ARGOCD_DEPLOY: ${{ secrets.ARGOCD_DEPLOY }}
+      automation-github-pat: ${{ secrets.AUTOMATION_GITHUB_PAT }}
+
+  staging-deployment:
+    name: "Staging"
+    uses: mastermindattack/argocd-deploy-workflow/.github/workflows/argocd-deploy-workflow.yml@v1.0.6
+    needs: [build, dev-deployment]
+    with:
+      building-block-name: "transaction-service"
+      artifact-version: ${{needs.build.outputs.artifact-version}}
+      environment: staging
+      validate-deployment: false
+    secrets:
+      ARGOCD_DEPLOY: ${{ secrets.ARGOCD_DEPLOY }}
+      automation-github-pat: ${{ secrets.AUTOMATION_GITHUB_PAT }}

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <Property name="LOG_EXCEPTION_CONVERSION_WORD">%xwEx</Property>
+        <Property name="LOG_LEVEL_PATTERN">%5p</Property>
+        <Property name="LOG_DATEFORMAT_PATTERN">yyyy-MM-dd HH:mm:ss.SSSXXX</Property>
+
+        <Property name="LOG_LEVEL">%clr{${sys:LOG_LEVEL_PATTERN}}</Property>
+        <Property name="TIME">%clr{%d{${sys:LOG_DATEFORMAT_PATTERN}}}{magenta}</Property>
+        <Property name="TRACE_ID">%clr{%X{X-trace-id}}{red}</Property>
+        <Property name="PID">%clr{%pid}{magenta}</Property>
+        <Property name="QUERY_STRING">%X{X-Querystring}</Property>
+        <Property name="THREAD">%clr{[%t]}{faint}</Property>
+        <Property name="LOGGER_NAME">%clr{%c{1.}}{cyan}</Property>
+        <Property name="MESSAGE">%m%n${sys:LOG_EXCEPTION_CONVERSION_WORD}</Property>
+
+        <Property name="CONSOLE_LOG_PATTERN_DEFAULT">%d{${LOG_DATEFORMAT_PATTERN}} ${LOG_LEVEL_PATTERN} %pid --- [%t] %-40.40c{1.} : %m%n${sys:LOG_EXCEPTION_CONVERSION_WORD}</Property>
+        <Property name="CONSOLE_LOG_PATTERN_EXTENDED">${sys:LOG_LEVEL}|${sys:TIME}|${sys:TRACE_ID}|${sys:PID}|${sys:THREAD}|${sys:QUERY_STRING}|${sys:LOGGER_NAME}|${sys:MESSAGE}</Property>
+    </Properties>
+
+    <DynamicThresholdFilter key="X-B3-Flags-Debug" onMatch="ACCEPT" defaultThreshold="warn" onMismatch="NEUTRAL">
+        <KeyValuePair key="true" value="trace"/>
+    </DynamicThresholdFilter>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT" follow="true">
+            <PatternLayout pattern="${sys:CONSOLE_LOG_PATTERN_EXTENDED}"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="Console" />
+        </Root>
+    </Loggers>
+</Configuration>
