@@ -1,0 +1,8 @@
+---
+smallworldfs:
+  observability:
+    tracing:
+      sampling-rate: 0
+
+transaction-data-service:
+  url: http://localhost:8080

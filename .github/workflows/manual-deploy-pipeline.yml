@@ -1,0 +1,56 @@
+name: "Manual deployment"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment"
+        type: choice
+        required: true
+        options:
+          - dev
+          - staging
+          - live
+      version:
+        description: 'Version to deploy'
+        required: true
+
+jobs:
+  dev-deployment:
+    name: "Dev"
+    if: github.event.inputs.environment == 'dev'
+    uses: mastermindattack/argocd-deploy-workflow/.github/workflows/argocd-deploy-workflow.yml@v1.0.6
+    with:
+      building-block-name: "transaction-service"
+      artifact-version: ${{ github.event.inputs.version }}
+      environment: dev
+      validate-deployment: false
+    secrets:
+      ARGOCD_DEPLOY: ${{ secrets.ARGOCD_DEPLOY }}
+      automation-github-pat: ${{ secrets.AUTOMATION_GITHUB_PAT }}
+
+  staging-deployment:
+    name: "Staging"
+    if: github.event.inputs.environment == 'staging'
+    uses: mastermindattack/argocd-deploy-workflow/.github/workflows/argocd-deploy-workflow.yml@v1.0.6
+    with:
+      building-block-name: "transaction-service"
+      artifact-version: ${{ github.event.inputs.version }}
+      environment: staging
+      validate-deployment: false
+    secrets:
+      ARGOCD_DEPLOY: ${{ secrets.ARGOCD_DEPLOY }}
+      automation-github-pat: ${{ secrets.AUTOMATION_GITHUB_PAT }}
+
+  live-deployment:
+    name: "Live"
+    if: github.event.inputs.environment == 'live'
+    uses: mastermindattack/argocd-deploy-workflow/.github/workflows/argocd-deploy-workflow.yml@v1.0.6
+    with:
+      building-block-name: "transaction-service"
+      artifact-version: ${{ github.event.inputs.version }}
+      environment: live
+      validate-deployment: false
+    secrets:
+      ARGOCD_DEPLOY: ${{ secrets.ARGOCD_DEPLOY }}
+      automation-github-pat: ${{ secrets.AUTOMATION_GITHUB_PAT }}

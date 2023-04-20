@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/transactions/1"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "transactionId": 1,
+      "sendingPrincipal": 100.0,
+      "payoutPrincipal": 98.0,
+      "fees": 2.0,
+      "commission": 1.8,
+      "agentCommission": 0.2,
+      "senderId": 3,
+      "beneficiaryId": 4,
+      "status": "NEW"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

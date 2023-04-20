@@ -1,0 +1,48 @@
+---
+spring:
+  application:
+    name: transaction-service
+  output:
+    ansi:
+      enabled: ALWAYS
+server:
+  port: 8080
+springdoc:
+  api-docs:
+    path: /api-docs
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      base-path: /manage
+      exposure:
+        include: '*'
+  info:
+    git:
+      mode: full
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  endpoint:
+    beans:
+      enabled: true
+    health:
+      enabled: true
+      probes:
+        enabled: true
+      show-details: ALWAYS
+    mappings:
+      enabled: true
+    env:
+      enabled: true
+    conditions:
+      enabled: true
+    info:
+      enabled: true
+    threaddump:
+      enabled: true
+    configprops:
+      enabled: true
