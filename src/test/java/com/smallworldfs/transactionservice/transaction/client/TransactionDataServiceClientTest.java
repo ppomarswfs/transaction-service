@@ -31,6 +31,4 @@ class TransactionDataServiceClientTest {
             assertThat(transaction).isEqualTo(newTransaction());
         }
     }
-
-
 }
