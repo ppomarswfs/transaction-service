@@ -45,7 +45,7 @@ public class TransactionControllerTest {
     class GetTransaction {
 
         @Test
-        void returns_404_when_get_transaction_not_exist() throws Exception {
+        void returns_404_when_transaction_not_exist() throws Exception {
             int transactionId = 55;
             wheTransactionIsQueriedThenThrowNotFoundException(transactionId);
 
@@ -58,7 +58,7 @@ public class TransactionControllerTest {
         }
 
         @Test
-        void returns_transaction_data_when_get_transaction_exist() throws Exception {
+        void returns_transaction_data_when_transaction_exist() throws Exception {
             whenTransactionIsQuierdidThenReturnTransaction(1, newTransaction());
 
             getTransaction(1)
@@ -74,6 +74,22 @@ public class TransactionControllerTest {
                     .andExpect(jsonPath("$.status", Matchers.equalTo("NEW")));
         }
 
+
+        private void whenTransactionIsQuierdidThenReturnTransaction(int id, Transaction transaction) {
+            when(service.getTransaction(id)).thenReturn(transaction);
+        }
+
+        private ResultActions getTransaction(int id) throws Exception {
+            return mockMvc.perform(MockMvcRequestBuilders.get("/transactions/{id}", id));
+        }
+
+        private void wheTransactionIsQueriedThenThrowNotFoundException(int transactionId) {
+            when(service.getTransaction(transactionId))
+                    .thenThrow(TRANSACTION_NOT_FOUND.withParameters(transactionId).asException());
+        }
+    }
+    @Nested
+    class CreateTransaction {
         @Test
         void return_400_when_create_without_sending_principal() throws Exception {
             TransactionDto transactionDto = newTransactionDto();
@@ -194,19 +210,6 @@ public class TransactionControllerTest {
                     .andExpect(jsonPath("$.status", Matchers.equalTo("NEW")));
         }
 
-        private void whenTransactionIsQuierdidThenReturnTransaction(int id, Transaction transaction) {
-            when(service.getTransaction(id)).thenReturn(transaction);
-        }
-
-        private ResultActions getTransaction(int id) throws Exception {
-            return mockMvc.perform(MockMvcRequestBuilders.get("/transactions/{id}", id));
-        }
-
-        private void wheTransactionIsQueriedThenThrowNotFoundException(int transactionId) {
-            when(service.getTransaction(transactionId))
-                    .thenThrow(TRANSACTION_NOT_FOUND.withParameters(transactionId).asException());
-        }
-
         private ResultActions postTransaction(TransactionDto transactionDto) throws Exception {
             return mockMvc.perform(MockMvcRequestBuilders.post("/transactions")
                     .content(asJsonString(transactionDto))
@@ -222,6 +225,7 @@ public class TransactionControllerTest {
                 throw new RuntimeException(e);
             }
         }
+
     }
 
 }
