@@ -21,4 +21,8 @@ public class TransactionService {
             throw TRANSACTION_NOT_FOUND.withParameters(id).causedBy(exception).asException();
         }
     }
+
+    public Transaction createTransaction(Transaction transaction) {
+        return null;
+    }
 }

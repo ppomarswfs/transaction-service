@@ -1,5 +1,6 @@
 package com.smallworldfs.transactionservice;
 
+import com.smallworldfs.transactionservice.transaction.api.model.TransactionDto;
 import com.smallworldfs.transactionservice.transaction.entity.Transaction;
 import com.smallworldfs.transactionservice.transaction.entity.TransactionStatus;
 
@@ -15,6 +16,15 @@ public class Transactions {
                 .senderId(3)
                 .beneficiaryId(4)
                 .status(TransactionStatus.NEW)
+                .build();
+    }
+
+    public static TransactionDto newTransactionDto() {
+        return TransactionDto.builder()
+                .sendingPrincipal(100.0)
+                .payoutPrincipal(98.0)
+                .senderId(3)
+                .beneficiaryId(4)
                 .build();
     }
 
