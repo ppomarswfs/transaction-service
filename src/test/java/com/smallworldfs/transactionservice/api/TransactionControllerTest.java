@@ -67,13 +67,12 @@ public class TransactionControllerTest {
                     .andExpect(jsonPath("$.sendingPrincipal", Matchers.equalTo(100.0)))
                     .andExpect(jsonPath("$.payoutPrincipal", Matchers.equalTo(98.0)))
                     .andExpect(jsonPath("$.fees", Matchers.equalTo(2.0)))
-                    .andExpect(jsonPath("$.commission", Matchers.equalTo(1.8)))
-                    .andExpect(jsonPath("$.agentCommission", Matchers.equalTo(0.2)))
+                    .andExpect(jsonPath("$.commission", Matchers.equalTo(1.6)))
+                    .andExpect(jsonPath("$.agentCommission", Matchers.equalTo(0.4)))
                     .andExpect(jsonPath("$.senderId", Matchers.equalTo(3)))
                     .andExpect(jsonPath("$.beneficiaryId", Matchers.equalTo(4)))
                     .andExpect(jsonPath("$.status", Matchers.equalTo("NEW")));
         }
-
 
         private void whenTransactionIsQuierdidThenReturnTransaction(int id, Transaction transaction) {
             when(service.getTransaction(id)).thenReturn(transaction);
@@ -88,8 +87,10 @@ public class TransactionControllerTest {
                     .thenThrow(TRANSACTION_NOT_FOUND.withParameters(transactionId).asException());
         }
     }
+
     @Nested
     class CreateTransaction {
+
         @Test
         void return_400_when_create_without_sending_principal() throws Exception {
             TransactionDto transactionDto = newTransactionDto();
@@ -203,8 +204,8 @@ public class TransactionControllerTest {
                     .andExpect(jsonPath("$.sendingPrincipal", Matchers.equalTo(100.0)))
                     .andExpect(jsonPath("$.payoutPrincipal", Matchers.equalTo(98.0)))
                     .andExpect(jsonPath("$.fees", Matchers.equalTo(2.0)))
-                    .andExpect(jsonPath("$.commission", Matchers.equalTo(1.8)))
-                    .andExpect(jsonPath("$.agentCommission", Matchers.equalTo(0.2)))
+                    .andExpect(jsonPath("$.commission", Matchers.equalTo(1.6)))
+                    .andExpect(jsonPath("$.agentCommission", Matchers.equalTo(0.4)))
                     .andExpect(jsonPath("$.senderId", Matchers.equalTo(3)))
                     .andExpect(jsonPath("$.beneficiaryId", Matchers.equalTo(4)))
                     .andExpect(jsonPath("$.status", Matchers.equalTo("NEW")));
