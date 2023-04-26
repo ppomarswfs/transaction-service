@@ -9,5 +9,6 @@ public interface TransactionDtoMapper {
 
     TransactionDto toDto(Transaction transaction);
 
+    Transaction toModel(TransactionDto transactionDto);
 
 }

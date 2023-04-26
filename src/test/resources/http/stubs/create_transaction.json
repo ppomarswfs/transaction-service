@@ -1,7 +1,12 @@
 {
   "request": {
-    "method": "GET",
-    "url": "/transactions/1"
+    "method": "POST",
+    "url": "/transactions/",
+    "bodyPatterns": [
+      {
+        "contains" : "\"senderId\":3"
+      }
+    ]
   },
   "response": {
     "status": 200,
