@@ -28,6 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import wiremock.com.fasterxml.jackson.core.JsonProcessingException;
 import wiremock.com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(controllers = TransactionController.class)
@@ -213,20 +214,14 @@ public class TransactionControllerTest {
 
         private ResultActions postTransaction(TransactionDto transactionDto) throws Exception {
             return mockMvc.perform(MockMvcRequestBuilders.post("/transactions")
-                    .content(asJsonString(transactionDto))
+                    .content(parseToJsonString(transactionDto))
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON));
         }
 
-        private static String asJsonString(final Object obj) {
-            try {
-                final ObjectMapper mapper = new ObjectMapper();
-                return mapper.writeValueAsString(obj);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        private String parseToJsonString(TransactionDto transactionDto) throws JsonProcessingException {
+            return new ObjectMapper().writeValueAsString(transactionDto);
         }
-
     }
 
 }

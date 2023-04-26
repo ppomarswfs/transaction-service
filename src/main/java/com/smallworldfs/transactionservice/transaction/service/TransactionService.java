@@ -29,8 +29,10 @@ public class TransactionService {
     }
 
     public Transaction createTransaction(Transaction transaction) {
-        validateTransaction(transaction);
+        businessRules(transaction);
         setCalculatedFields(transaction);
+        // FIXME Aqui dejariamos propagar un error 500 hacia arriba o deberiamos tratarlo.
+        // Dependera de si es una API o un Service?
         return client.createTransaction(transaction);
     }
 
@@ -41,9 +43,20 @@ public class TransactionService {
         transaction.setStatus(TransactionStatus.NEW);
     }
 
-    private void validateTransaction(Transaction transaction) {
+    private void businessRules(Transaction transaction) {
         validateSendingIsGreaterPayout(transaction);
         validateSendingNotExceedsLimit(transaction.getSendingPrincipal());
+        validateSenderNotExceedsLimitByPeriod(transaction.getSenderId());
+        validateClientNotExceedsLimitOpenTransactions(transaction);
+    }
+
+    private void validateClientNotExceedsLimitOpenTransactions(Transaction transaction) {
+        // TODO implement
+    }
+
+    private void validateSenderNotExceedsLimitByPeriod(Integer senderId) {
+        // TODO implement
+        //FIXME que pasa si falla? politica de reintentos?
     }
 
     private void validateSendingNotExceedsLimit(Double sendingPrincipal) {

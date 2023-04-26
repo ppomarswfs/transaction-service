@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/transactions/",
+    "bodyPatterns": [
+      {
+        "contains" : "\"senderId\":9999"
+      }
+    ]
+  },
+  "response": {
+    "status": 503
+  }
+}
