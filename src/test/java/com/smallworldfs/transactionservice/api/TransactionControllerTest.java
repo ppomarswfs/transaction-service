@@ -63,7 +63,7 @@ public class TransactionControllerTest {
 
         @Test
         void returns_transaction_data_when_transaction_exist() throws Exception {
-            whenTransactionIsQuierdidThenReturnTransaction(1, newTransaction());
+            whenTransactionIsQueriedIdThenReturnTransaction(1, newTransaction());
 
             getTransaction(1)
                     .andExpect(status().isOk())
@@ -78,7 +78,7 @@ public class TransactionControllerTest {
                     .andExpect(jsonPath("$.status", Matchers.equalTo("NEW")));
         }
 
-        private void whenTransactionIsQuierdidThenReturnTransaction(int id, Transaction transaction) {
+        private void whenTransactionIsQueriedIdThenReturnTransaction(int id, Transaction transaction) {
             when(service.getTransaction(id)).thenReturn(transaction);
         }
 
