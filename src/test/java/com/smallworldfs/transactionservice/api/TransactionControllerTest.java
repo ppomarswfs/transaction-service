@@ -149,7 +149,7 @@ public class TransactionControllerTest {
         @Test
         void return_400_when_create_where_client_has_five_transaction() throws Exception {
             when(service.createTransaction(mapper.toModel(newTransactionDto()))).thenThrow(
-                    CLIENT_EXCEED_LIMIT_OPEN_TRANSACTIONS.asException());
+                    CLIENT_EXCEED_LIMIT_OPEN_TRANSACTIONS.withParameters(5).asException());
             post("correct", "transaction")
                     .andExpect(status().isBadRequest())
                     .andExpect(

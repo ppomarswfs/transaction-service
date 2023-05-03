@@ -1,5 +1,6 @@
 package com.smallworldfs.transactionservice.transaction.service;
 
+import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.CLIENT_EXCEED_LIMIT_OPEN_TRANSACTIONS;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_EXCEEDS_SENDING_LIMIT;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_NOT_FOUND;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_SENDING_IS_LESS_THAN_PAYOUT;
@@ -9,6 +10,7 @@ import com.smallworldfs.transactionservice.transaction.client.TransactionDataSer
 import com.smallworldfs.transactionservice.transaction.entity.Transaction;
 import com.smallworldfs.transactionservice.transaction.entity.TransactionStatus;
 import com.smallworldfs.transactionservice.transaction.properties.TransactionProperties;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -51,12 +53,18 @@ public class TransactionService {
     }
 
     private void validateClientNotExceedsLimitOpenTransactions(Transaction transaction) {
-        // TODO implement
+        List<Transaction> transactions =
+                client.getOpenTransactionsByUser(transaction.getSenderId(), "NEW");
+        if (transactions.size() >= transactionProperties.getMaxOpenTransactions()) {
+            throw CLIENT_EXCEED_LIMIT_OPEN_TRANSACTIONS
+                    .withParameters(transactionProperties.getMaxOpenTransactions())
+                    .asException();
+        }
     }
 
     private void validateSenderNotExceedsLimitByPeriod(Integer senderId) {
         // TODO implement
-        //FIXME que pasa si falla? politica de reintentos?
+        // FIXME que pasa si falla? politica de reintentos?
     }
 
     private void validateSendingNotExceedsLimit(Double sendingPrincipal) {

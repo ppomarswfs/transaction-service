@@ -2,7 +2,7 @@ package com.smallworldfs.transactionservice.transaction.client;
 
 import static com.smallworldfs.transactionservice.Transactions.newTransaction;
 import static com.smallworldfs.transactionservice.Transactions.newTransactionWithoutId;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.smallworldfs.starter.http.error.exception.HttpException;
@@ -29,7 +29,7 @@ class TransactionDataServiceClientTest {
         @Test
         void returns_transaction_when_server_returns_transaction_data() {
             Transaction transaction = client.getTransaction(1);
-            assertThat(transaction).isEqualTo(newTransaction());
+            assertEquals(newTransaction(), transaction);
         }
     }
 
@@ -47,7 +47,7 @@ class TransactionDataServiceClientTest {
         @Test
         void returns_transaction_when_server_returns_transaction_data() {
             Transaction transaction = client.createTransaction(newTransactionWithoutId());
-            assertThat(transaction).isEqualTo(newTransaction());
+            assertEquals(newTransaction(), transaction);
         }
     }
 }
