@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/transactions/client=10&status=NEW"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": [],
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
