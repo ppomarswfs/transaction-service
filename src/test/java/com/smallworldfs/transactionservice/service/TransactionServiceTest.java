@@ -18,6 +18,7 @@ import com.smallworldfs.transactionservice.transaction.api.mapper.TransactionDto
 import com.smallworldfs.transactionservice.transaction.api.model.TransactionDto;
 import com.smallworldfs.transactionservice.transaction.client.TransactionDataServiceClient;
 import com.smallworldfs.transactionservice.transaction.entity.Transaction;
+import com.smallworldfs.transactionservice.transaction.entity.TransactionStatus;
 import com.smallworldfs.transactionservice.transaction.properties.TransactionProperties;
 import com.smallworldfs.transactionservice.transaction.service.TransactionService;
 import java.util.Collections;
@@ -110,7 +111,7 @@ public class TransactionServiceTest {
             when(properties.getMaxTransactionValue()).thenReturn(3000.0);
             when(properties.getAgentCommission()).thenReturn(0.2);
             when(properties.getMaxOpenTransactions()).thenReturn(5);
-            when(client.getOpenTransactionsByUser(3, "NEW")).thenReturn(createTransactionList(0));
+            when(client.getOpenTransactionsByUser(3, TransactionStatus.NEW)).thenReturn(createTransactionList(0));
             TransactionDto transactionDto = newTransactionDto();
 
             service.createTransaction(mapper.toModel(transactionDto));
@@ -124,7 +125,8 @@ public class TransactionServiceTest {
             when(properties.getMaxTransactionValue()).thenReturn(3000.0);
             when(properties.getAgentCommission()).thenReturn(0.2);
             when(properties.getMaxOpenTransactions()).thenReturn(limit);
-            when(client.getOpenTransactionsByUser(3, "NEW")).thenReturn(createTransactionList(limit - 1));
+            when(client.getOpenTransactionsByUser(3, TransactionStatus.NEW))
+                    .thenReturn(createTransactionList(limit - 1));
             TransactionDto transactionDto = newTransactionDto();
 
             service.createTransaction(mapper.toModel(transactionDto));
@@ -137,7 +139,7 @@ public class TransactionServiceTest {
             int limit = 5;
             when(properties.getMaxTransactionValue()).thenReturn(3000.0);
             when(properties.getMaxOpenTransactions()).thenReturn(limit);
-            when(client.getOpenTransactionsByUser(3, "NEW")).thenReturn(createTransactionList(limit));
+            when(client.getOpenTransactionsByUser(3, TransactionStatus.NEW)).thenReturn(createTransactionList(limit));
             TransactionDto transactionDto = newTransactionDto();
 
 
@@ -147,6 +149,11 @@ public class TransactionServiceTest {
 
             assertThat(exception).hasMessage("Client cannot has more than 5 transactions in progress")
                     .returns(REQUEST_ERROR, e -> e.getIssue().getType());
+        }
+
+        @Test
+        void not_call_create_transaction_when_user_not_exist() {
+            // TODO not capture error but validate service propagate error
         }
 
         private List<Transaction> createTransactionList(int limit) {

@@ -1,6 +1,7 @@
 package com.smallworldfs.transactionservice.transaction.client;
 
 import com.smallworldfs.transactionservice.transaction.entity.Transaction;
+import com.smallworldfs.transactionservice.transaction.entity.TransactionStatus;
 import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
@@ -19,5 +20,5 @@ public interface TransactionDataServiceClient {
     Transaction createTransaction(@RequestBody Transaction transaction);
 
     @GetMapping(value = "/transactions/client={userId}&status={status}", produces = MediaType.APPLICATION_JSON_VALUE)
-    List<Transaction> getOpenTransactionsByUser(int userId, String status);
+    List<Transaction> getOpenTransactionsByUser(@PathVariable int userId, @PathVariable TransactionStatus status);
 }

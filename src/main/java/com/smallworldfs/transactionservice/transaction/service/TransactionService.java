@@ -54,7 +54,7 @@ public class TransactionService {
 
     private void validateClientNotExceedsLimitOpenTransactions(Transaction transaction) {
         List<Transaction> transactions =
-                client.getOpenTransactionsByUser(transaction.getSenderId(), "NEW");
+                client.getOpenTransactionsByUser(transaction.getSenderId(), TransactionStatus.NEW);
         if (transactions.size() >= transactionProperties.getMaxOpenTransactions()) {
             throw CLIENT_EXCEED_LIMIT_OPEN_TRANSACTIONS
                     .withParameters(transactionProperties.getMaxOpenTransactions())

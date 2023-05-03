@@ -1,0 +1,9 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/transactions/client=9999&status=NEW"
+  },
+  "response": {
+    "status": 404
+  }
+}
