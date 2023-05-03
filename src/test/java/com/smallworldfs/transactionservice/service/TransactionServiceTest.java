@@ -8,6 +8,8 @@ import static com.smallworldfs.transactionservice.Transactions.newTransactionWit
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.smallworldfs.error.exception.ApplicationException;
@@ -18,6 +20,8 @@ import com.smallworldfs.transactionservice.transaction.client.TransactionDataSer
 import com.smallworldfs.transactionservice.transaction.entity.Transaction;
 import com.smallworldfs.transactionservice.transaction.properties.TransactionProperties;
 import com.smallworldfs.transactionservice.transaction.service.TransactionService;
+import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -102,8 +106,51 @@ public class TransactionServiceTest {
         }
 
         @Test
-        void throw_error_when_create_where_client_has_five_transaction() {
-            // TODO
+        void call_create_transaction_when_user_has_not_any_transaction_open() {
+            when(properties.getMaxTransactionValue()).thenReturn(3000.0);
+            when(properties.getAgentCommission()).thenReturn(0.2);
+            when(properties.getMaxOpenTransactions()).thenReturn(5);
+            when(client.getOpenTransactionsByUser(3, "NEW")).thenReturn(createTransactionList(0));
+            TransactionDto transactionDto = newTransactionDto();
+
+            service.createTransaction(mapper.toModel(transactionDto));
+
+            verify(client, times(1)).createTransaction(newTransactionWithoutId());
+        }
+
+        @Test
+        void call_create_transaction_when_user_has_less_open_transaction_to_limit() {
+            int limit = 5;
+            when(properties.getMaxTransactionValue()).thenReturn(3000.0);
+            when(properties.getAgentCommission()).thenReturn(0.2);
+            when(properties.getMaxOpenTransactions()).thenReturn(limit);
+            when(client.getOpenTransactionsByUser(3, "NEW")).thenReturn(createTransactionList(limit - 1));
+            TransactionDto transactionDto = newTransactionDto();
+
+            service.createTransaction(mapper.toModel(transactionDto));
+
+            verify(client, times(1)).createTransaction(newTransactionWithoutId());
+        }
+
+        @Test
+        void not_call_create_transaction_when_user_exceeds_open_transaction_limit() {
+            int limit = 5;
+            when(properties.getMaxTransactionValue()).thenReturn(3000.0);
+            when(properties.getMaxOpenTransactions()).thenReturn(limit);
+            when(client.getOpenTransactionsByUser(3, "NEW")).thenReturn(createTransactionList(limit));
+            TransactionDto transactionDto = newTransactionDto();
+
+
+            ApplicationException exception =
+                    assertThrows(ApplicationException.class,
+                            () -> service.createTransaction(mapper.toModel(transactionDto)));
+
+            assertThat(exception).hasMessage("Client cannot has more than 5 transactions in progress")
+                    .returns(REQUEST_ERROR, e -> e.getIssue().getType());
+        }
+
+        private List<Transaction> createTransactionList(int limit) {
+            return Collections.nCopies(limit, newTransaction());
         }
 
         @Test
@@ -115,6 +162,7 @@ public class TransactionServiceTest {
         void return_transaction_when_is_created() {
             when(properties.getMaxTransactionValue()).thenReturn(3000.0);
             when(properties.getAgentCommission()).thenReturn(0.2);
+            when(properties.getMaxOpenTransactions()).thenReturn(5);
             when(client.createTransaction(newTransactionWithoutId())).thenReturn(newTransaction());
             TransactionDto transactionDto = newTransactionDto();
 
