@@ -12,5 +12,6 @@ public class TransactionProperties {
     private double maxTransactionValue = 3000.0;
     private double agentCommission = 0.2;
     private int maxOpenTransactions = 5;
-
+    private double maxTransactionByPeriod = 5000.0;
+    private int daysLimitByPeriod = 30;
 }

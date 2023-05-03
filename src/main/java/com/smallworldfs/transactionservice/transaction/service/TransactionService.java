@@ -1,6 +1,7 @@
 package com.smallworldfs.transactionservice.transaction.service;
 
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.CLIENT_EXCEED_LIMIT_OPEN_TRANSACTIONS;
+import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.CLIENT_EXCEED_LIMIT_TO_SEND_IN_PERIOD;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_EXCEEDS_SENDING_LIMIT;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_NOT_FOUND;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_SENDING_IS_LESS_THAN_PAYOUT;
@@ -33,8 +34,6 @@ public class TransactionService {
     public Transaction createTransaction(Transaction transaction) {
         businessRules(transaction);
         setCalculatedFields(transaction);
-        // FIXME Aqui dejariamos propagar un error 500 hacia arriba o deberiamos tratarlo.
-        // Dependera de si es una API o un Service?
         return client.createTransaction(transaction);
     }
 
@@ -48,7 +47,7 @@ public class TransactionService {
     private void businessRules(Transaction transaction) {
         validateSendingIsGreaterPayout(transaction);
         validateSendingNotExceedsLimit(transaction.getSendingPrincipal());
-        validateSenderNotExceedsLimitByPeriod(transaction.getSenderId());
+        validateSenderNotExceedsLimitByPeriod(transaction);
         validateClientNotExceedsLimitOpenTransactions(transaction);
     }
 
@@ -62,9 +61,20 @@ public class TransactionService {
         }
     }
 
-    private void validateSenderNotExceedsLimitByPeriod(Integer senderId) {
-        // TODO implement
-        // FIXME que pasa si falla? politica de reintentos?
+    private void validateSenderNotExceedsLimitByPeriod(Transaction transaction) {
+        double sumAmounts = getTotalAmountsByPeriod(transaction.getSenderId()) + transaction.getSendingPrincipal();
+        if (sumAmounts > transactionProperties.getMaxTransactionByPeriod()) {
+            throw CLIENT_EXCEED_LIMIT_TO_SEND_IN_PERIOD
+                    .withParameters(transactionProperties.getMaxTransactionByPeriod(),
+                            transactionProperties.getDaysLimitByPeriod(), sumAmounts)
+                    .asException();
+        }
+    }
+
+    private double getTotalAmountsByPeriod(int senderId) {
+        List<Transaction> transactions = client.getTransactionsBySenderIdWithPeriod(senderId,
+                transactionProperties.getDaysLimitByPeriod());
+        return transactions.stream().mapToDouble(Transaction::getSendingPrincipal).sum();
     }
 
     private void validateSendingNotExceedsLimit(Double sendingPrincipal) {

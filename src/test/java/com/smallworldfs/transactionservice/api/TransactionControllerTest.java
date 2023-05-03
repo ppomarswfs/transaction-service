@@ -161,11 +161,12 @@ public class TransactionControllerTest {
         @Test
         void return_400_when_create_where_client_cannot_send_more_5000_in_period() throws Exception {
             when(service.createTransaction(mapper.toModel(newTransactionDto()))).thenThrow(
-                    CLIENT_EXCEED_LIMIT_TO_SEND_IN_PERIOD.asException());
+                    CLIENT_EXCEED_LIMIT_TO_SEND_IN_PERIOD.withParameters(5000, 30, 6000).asException());
 
             post("correct", "transaction")
                     .andExpect(status().isBadRequest())
-                    .andExpect(errorDto().hasMessage("Client cannot has more than 5000$ in a given 30 day period")
+                    .andExpect(errorDto().hasMessage(
+                            "Client cannot has more than 5,000$ in a given 30 days period. Now sender would has 6,000$")
                             .hasType("REQUEST_ERROR")
                             .hasCode("CLIENT_EXCEED_LIMIT_TO_SEND_IN_PERIOD"));
         }
