@@ -64,14 +64,36 @@ class TransactionDataServiceClientTest {
 
         @Test
         void return_empty_list_when_user_has_not_open_transactions() {
-            List<Transaction> transactions  =client.getOpenTransactionsByUser(10, TransactionStatus.NEW);
-            assertEquals(0,transactions.size());
+            List<Transaction> transactions = client.getOpenTransactionsByUser(10, TransactionStatus.NEW);
+            assertEquals(0, transactions.size());
         }
 
         @Test
         void return_transaction_list_when_user_has_open_transactions() {
-            List<Transaction> transactions  =client.getOpenTransactionsByUser(3, TransactionStatus.NEW);
-            assertEquals(3,transactions.size());
+            List<Transaction> transactions = client.getOpenTransactionsByUser(3, TransactionStatus.NEW);
+            assertEquals(3, transactions.size());
         }
+    }
+
+    @Nested
+    class GetTransactionsBySenderIdWithPeriod {
+        @Test
+        void throws_error_when_server_returns_400() {
+            assertThrows(HttpException.NotFound.class,
+                    () -> client.getTransactionsBySenderIdWithPeriod(9999, 30));
+        }
+
+        @Test
+        void return_empty_list_when_user_has_not_open_transactions() {
+            List<Transaction> transactions = client.getTransactionsBySenderIdWithPeriod(10, 30);
+            assertEquals(0, transactions.size());
+        }
+
+        @Test
+        void return_transaction_list_when_user_has_open_transactions() {
+            List<Transaction> transactions = client.getTransactionsBySenderIdWithPeriod(3,30);
+            assertEquals(3, transactions.size());
+        }
+
     }
 }

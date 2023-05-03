@@ -17,7 +17,8 @@ public enum TransactionIssue implements Issue {
             DefaultIssueType.REQUEST_ERROR),
     CLIENT_EXCEED_LIMIT_OPEN_TRANSACTIONS("Client cannot has more than {0} transactions in progress",
             DefaultIssueType.REQUEST_ERROR),
-    CLIENT_EXCEED_LIMIT_TO_SEND_IN_PERIOD("Client cannot has more than 5000$ in a given 30 day period",
+    CLIENT_EXCEED_LIMIT_TO_SEND_IN_PERIOD(
+            "Client cannot has more than {0}$ in a given {1} days period. Now sender would has {2}$",
             DefaultIssueType.REQUEST_ERROR),
             ;
 

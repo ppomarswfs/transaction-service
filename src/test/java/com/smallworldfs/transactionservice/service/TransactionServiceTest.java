@@ -51,7 +51,7 @@ public class TransactionServiceTest {
 
         @Test
         void throws_transaction_not_found_when_client_returns_404() {
-            whenTransactionIsQueriedThenThrowNotFound(55);
+            whenTransactionIsQueriedThenThrowNotFound();
 
             ApplicationException exception = assertThrows(ApplicationException.class, () -> service.getTransaction(55));
 
@@ -61,7 +61,7 @@ public class TransactionServiceTest {
 
         @Test
         void returns_transaction_data_when_transaction_exists() {
-            whenTransactionIsQueriedThenReturnTransaction(1, newTransaction());
+            whenTransactionIsQueriedThenReturnTransaction(newTransaction());
 
             Transaction transaction = service.getTransaction(1);
 
@@ -69,12 +69,12 @@ public class TransactionServiceTest {
             assertThat(transaction).isEqualTo(newTransaction());
         }
 
-        private void whenTransactionIsQueriedThenThrowNotFound(int id) {
-            when(client.getTransaction(id)).thenThrow(MockHttpException.notFound());
+        private void whenTransactionIsQueriedThenThrowNotFound() {
+            when(client.getTransaction(55)).thenThrow(MockHttpException.notFound());
         }
 
-        private void whenTransactionIsQueriedThenReturnTransaction(int id, Transaction transaction) {
-            when(client.getTransaction(id)).thenReturn(transaction);
+        private void whenTransactionIsQueriedThenReturnTransaction(Transaction transaction) {
+            when(client.getTransaction(1)).thenReturn(transaction);
         }
     }
 
@@ -108,9 +108,7 @@ public class TransactionServiceTest {
 
         @Test
         void call_create_transaction_when_user_has_not_any_transaction_open() {
-            when(properties.getMaxTransactionValue()).thenReturn(3000.0);
-            when(properties.getAgentCommission()).thenReturn(0.2);
-            when(properties.getMaxOpenTransactions()).thenReturn(5);
+            whenDefaultProperties();
             when(client.getOpenTransactionsByUser(3, TransactionStatus.NEW)).thenReturn(createTransactionList(0));
             TransactionDto transactionDto = newTransactionDto();
 
@@ -121,12 +119,9 @@ public class TransactionServiceTest {
 
         @Test
         void call_create_transaction_when_user_has_less_open_transaction_to_limit() {
-            int limit = 5;
-            when(properties.getMaxTransactionValue()).thenReturn(3000.0);
-            when(properties.getAgentCommission()).thenReturn(0.2);
-            when(properties.getMaxOpenTransactions()).thenReturn(limit);
+            whenDefaultProperties();
             when(client.getOpenTransactionsByUser(3, TransactionStatus.NEW))
-                    .thenReturn(createTransactionList(limit - 1));
+                    .thenReturn(createTransactionList(4));
             TransactionDto transactionDto = newTransactionDto();
 
             service.createTransaction(mapper.toModel(transactionDto));
@@ -136,10 +131,8 @@ public class TransactionServiceTest {
 
         @Test
         void not_call_create_transaction_when_user_exceeds_open_transaction_limit() {
-            int limit = 5;
-            when(properties.getMaxTransactionValue()).thenReturn(3000.0);
-            when(properties.getMaxOpenTransactions()).thenReturn(limit);
-            when(client.getOpenTransactionsByUser(3, TransactionStatus.NEW)).thenReturn(createTransactionList(limit));
+            whenPropertiesWithoutCommission();
+            when(client.getOpenTransactionsByUser(3, TransactionStatus.NEW)).thenReturn(createTransactionList(5));
             TransactionDto transactionDto = newTransactionDto();
 
 
@@ -156,8 +149,55 @@ public class TransactionServiceTest {
             // TODO not capture error but validate service propagate error
         }
 
+        @Test
+        void call_create_transaction_when_user_has_less_limit_by_period() {
+            whenDefaultPropertiesWithDaysByPeriod();
+            when(client.getTransactionsBySenderIdWithPeriod(3, 30)).thenReturn(createTransactionList(2, 2400));
+            TransactionDto transactionDto = newTransactionDto();
+
+            service.createTransaction(mapper.toModel(transactionDto));
+
+            verify(client, times(1)).createTransaction(newTransactionWithoutId());
+        }
+
+        @Test
+        void call_create_transaction_when_user_has_equal_limit_by_period() {
+            whenDefaultPropertiesWithDaysByPeriod();
+            when(client.getTransactionsBySenderIdWithPeriod(3, 30)).thenReturn(createTransactionList(2, 2450));
+            TransactionDto transactionDto = newTransactionDto();
+
+            service.createTransaction(mapper.toModel(transactionDto));
+
+            verify(client, times(1)).createTransaction(newTransactionWithoutId());
+        }
+
+        @Test
+        void not_call_create_transaction_when_user_exceeds_limit_by_period() {
+            when(properties.getMaxTransactionValue()).thenReturn(3000.0);
+            when(properties.getDaysLimitByPeriod()).thenReturn(30);
+            when(properties.getMaxTransactionByPeriod()).thenReturn(5000.0);
+            when(client.getTransactionsBySenderIdWithPeriod(3, 30)).thenReturn(createTransactionList(2, 2499));
+            TransactionDto transactionDto = newTransactionDto();
+
+
+            ApplicationException exception =
+                    assertThrows(ApplicationException.class,
+                            () -> service.createTransaction(mapper.toModel(transactionDto)));
+
+            assertThat(exception)
+                    .hasMessage(
+                            "Client cannot has more than 5,000$ in a given 30 days period. Now sender would has 5,098$")
+                    .returns(REQUEST_ERROR, e -> e.getIssue().getType());
+        }
+
         private List<Transaction> createTransactionList(int limit) {
-            return Collections.nCopies(limit, newTransaction());
+            return createTransactionList(limit, 100.0);
+        }
+
+        private List<Transaction> createTransactionList(int limit, double sendingPrincipal) {
+            Transaction transaction = newTransaction();
+            transaction.setSendingPrincipal(sendingPrincipal);
+            return Collections.nCopies(limit, transaction);
         }
 
         @Test
@@ -167,9 +207,7 @@ public class TransactionServiceTest {
 
         @Test
         void return_transaction_when_is_created() {
-            when(properties.getMaxTransactionValue()).thenReturn(3000.0);
-            when(properties.getAgentCommission()).thenReturn(0.2);
-            when(properties.getMaxOpenTransactions()).thenReturn(5);
+            whenDefaultProperties();
             when(client.createTransaction(newTransactionWithoutId())).thenReturn(newTransaction());
             TransactionDto transactionDto = newTransactionDto();
 
@@ -178,6 +216,23 @@ public class TransactionServiceTest {
             assertEquals(newTransaction(), transaction);
         }
 
+        private void whenDefaultProperties() {
+            when(properties.getMaxTransactionValue()).thenReturn(3000.0);
+            when(properties.getAgentCommission()).thenReturn(0.2);
+            when(properties.getMaxOpenTransactions()).thenReturn(5);
+            when(properties.getMaxTransactionByPeriod()).thenReturn(5000.0);
+        }
+
+        private void whenPropertiesWithoutCommission() {
+            when(properties.getMaxTransactionValue()).thenReturn(3000.0);
+            when(properties.getMaxOpenTransactions()).thenReturn(5);
+            when(properties.getMaxTransactionByPeriod()).thenReturn(5000.0);
+        }
+
+        private void whenDefaultPropertiesWithDaysByPeriod() {
+            whenDefaultProperties();
+            when(properties.getDaysLimitByPeriod()).thenReturn(30);
+        }
 
     }
 

@@ -1,0 +1,9 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/transactions/senderId=9999&days=30"
+  },
+  "response": {
+    "status": 404
+  }
+}
