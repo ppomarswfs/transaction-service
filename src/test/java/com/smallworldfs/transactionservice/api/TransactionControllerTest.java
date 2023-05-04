@@ -5,9 +5,9 @@ import static com.smallworldfs.transactionservice.Transactions.newTransaction;
 import static com.smallworldfs.transactionservice.Transactions.newTransactionDto;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.CLIENT_EXCEED_LIMIT_OPEN_TRANSACTIONS;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.CLIENT_EXCEED_LIMIT_TO_SEND_IN_PERIOD;
+import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.MIN_FEE_IS_TOO_SMALL;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_EXCEEDS_SENDING_LIMIT;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_NOT_FOUND;
-import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_SENDING_IS_LESS_THAN_PAYOUT;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -121,14 +121,14 @@ public class TransactionControllerTest {
             TransactionDto transactionDto = newTransactionDto();
             transactionDto.setSendingPrincipal(50.0);
             when(service.createTransaction(mapper.toModel(transactionDto))).thenThrow(
-                    TRANSACTION_SENDING_IS_LESS_THAN_PAYOUT.withParameters(50.0, 98.0).asException());
+                    MIN_FEE_IS_TOO_SMALL.withParameters(100, 99.01, 1).asException());
 
             post("businessRules", "transactionSendingIsLessThanPayout")
                     .andExpect(status().isBadRequest())
-                    .andExpect(
-                            errorDto().hasMessage("Sending amount: 50 is less than payout amount: 98")
-                                    .hasType("REQUEST_ERROR")
-                                    .hasCode("TRANSACTION_SENDING_IS_LESS_THAN_PAYOUT"));
+                    .andExpect(errorDto()
+                            .hasMessage("The difference between sending (100) and payout (99.01) must be at least 1$")
+                            .hasType("REQUEST_ERROR")
+                            .hasCode("MIN_FEE_IS_TOO_SMALL"));
         }
 
         @Test

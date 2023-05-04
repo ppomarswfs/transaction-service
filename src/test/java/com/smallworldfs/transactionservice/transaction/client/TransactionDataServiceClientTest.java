@@ -77,6 +77,7 @@ class TransactionDataServiceClientTest {
 
     @Nested
     class GetTransactionsBySenderIdWithPeriod {
+
         @Test
         void throws_error_when_server_returns_400() {
             assertThrows(HttpException.NotFound.class,
@@ -91,7 +92,7 @@ class TransactionDataServiceClientTest {
 
         @Test
         void return_transaction_list_when_user_has_open_transactions() {
-            List<Transaction> transactions = client.getTransactionsBySenderIdWithPeriod(3,30);
+            List<Transaction> transactions = client.getTransactionsBySenderIdWithPeriod(3, 30);
             assertEquals(3, transactions.size());
         }
 
