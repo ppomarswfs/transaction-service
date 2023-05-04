@@ -2,9 +2,9 @@ package com.smallworldfs.transactionservice.transaction.service;
 
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.CLIENT_EXCEED_LIMIT_OPEN_TRANSACTIONS;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.CLIENT_EXCEED_LIMIT_TO_SEND_IN_PERIOD;
+import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.MIN_FEE_IS_TOO_SMALL;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_EXCEEDS_SENDING_LIMIT;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_NOT_FOUND;
-import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_SENDING_IS_LESS_THAN_PAYOUT;
 
 import com.smallworldfs.starter.http.error.exception.HttpException;
 import com.smallworldfs.transactionservice.transaction.client.TransactionDataServiceClient;
@@ -38,7 +38,7 @@ public class TransactionService {
     }
 
     private void setCalculatedFields(Transaction transaction) {
-        transaction.setFees(transaction.getSendingPrincipal() - transaction.getPayoutPrincipal());
+        transaction.setFees(calculateFee(transaction));
         transaction.setAgentCommission(transaction.getFees() * transactionProperties.getAgentCommission());
         transaction.setCommission(transaction.getFees() - transaction.getAgentCommission());
         transaction.setStatus(TransactionStatus.NEW);
@@ -86,10 +86,19 @@ public class TransactionService {
     }
 
     private void validateSendingIsGreaterPayout(Transaction transaction) {
-        if (transaction.getSendingPrincipal() < transaction.getPayoutPrincipal()) {
-            throw TRANSACTION_SENDING_IS_LESS_THAN_PAYOUT
-                    .withParameters(transaction.getSendingPrincipal(), transaction.getPayoutPrincipal())
+        if (feeIsLessToMin(transaction)) {
+            throw MIN_FEE_IS_TOO_SMALL
+                    .withParameters(transaction.getSendingPrincipal(), transaction.getPayoutPrincipal(),
+                            transactionProperties.getMinFee())
                     .asException();
         }
+    }
+
+    private boolean feeIsLessToMin(Transaction transaction) {
+        return calculateFee(transaction) < transactionProperties.getMinFee();
+    }
+
+    private static double calculateFee(Transaction transaction) {
+        return transaction.getSendingPrincipal() - transaction.getPayoutPrincipal();
     }
 }

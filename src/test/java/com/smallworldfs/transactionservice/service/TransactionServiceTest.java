@@ -83,14 +83,38 @@ public class TransactionServiceTest {
 
         @Test
         void throw_error_when_create_with_sending_is_less_payout() {
+            when(properties.getMinFee()).thenReturn(1.0);
+
             Transaction transaction = newTransaction();
-            transaction.setSendingPrincipal(50.0);
+            transaction.setPayoutPrincipal(99.01);
 
             ApplicationException exception =
                     assertThrows(ApplicationException.class, () -> service.createTransaction(transaction));
 
-            assertThat(exception).hasMessage("Sending amount: 50 is less than payout amount: 98")
+            assertThat(exception)
+                    .hasMessage("The difference between sending (100) and payout (99.01) must be at least 1$")
                     .returns(REQUEST_ERROR, e -> e.getIssue().getType());
+        }
+
+        @Test
+        void call_create_transaction_when_fee_is_correct() {
+            whenDefaultProperties();
+
+            TransactionDto transactionDto = newTransactionDto();
+            transactionDto.setPayoutPrincipal(99.0);
+            transactionDto.setFees(1.0);
+            transactionDto.setCommission(0.8);
+            transactionDto.setAgentCommission(0.2);
+
+            service.createTransaction(mapper.toModel(transactionDto));
+
+            Transaction transaction = newTransactionWithoutId();
+            transaction.setPayoutPrincipal(99.0);
+            transaction.setFees(1.0);
+            transaction.setCommission(0.8);
+            transaction.setAgentCommission(0.2);
+
+            verify(client, times(1)).createTransaction(transaction);
         }
 
         @Test
@@ -221,12 +245,14 @@ public class TransactionServiceTest {
             when(properties.getAgentCommission()).thenReturn(0.2);
             when(properties.getMaxOpenTransactions()).thenReturn(5);
             when(properties.getMaxTransactionByPeriod()).thenReturn(5000.0);
+            when(properties.getMinFee()).thenReturn(1.0);
         }
 
         private void whenPropertiesWithoutCommission() {
             when(properties.getMaxTransactionValue()).thenReturn(3000.0);
             when(properties.getMaxOpenTransactions()).thenReturn(5);
             when(properties.getMaxTransactionByPeriod()).thenReturn(5000.0);
+            when(properties.getMinFee()).thenReturn(1.0);
         }
 
         private void whenDefaultPropertiesWithDaysByPeriod() {
