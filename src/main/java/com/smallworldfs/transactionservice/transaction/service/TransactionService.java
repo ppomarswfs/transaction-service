@@ -1,16 +1,12 @@
 package com.smallworldfs.transactionservice.transaction.service;
 
-import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.CLIENT_EXCEED_LIMIT_OPEN_TRANSACTIONS;
-import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.CLIENT_EXCEED_LIMIT_TO_SEND_IN_PERIOD;
-import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.MIN_FEE_IS_TOO_SMALL;
-import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_EXCEEDS_SENDING_LIMIT;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_NOT_FOUND;
 
 import com.smallworldfs.starter.http.error.exception.HttpException;
+import com.smallworldfs.transactionservice.transaction.business.compliance.TransactionValidator;
+import com.smallworldfs.transactionservice.transaction.business.pricing.Pricing;
 import com.smallworldfs.transactionservice.transaction.client.TransactionDataServiceClient;
 import com.smallworldfs.transactionservice.transaction.entity.Transaction;
-import com.smallworldfs.transactionservice.transaction.entity.TransactionStatus;
-import com.smallworldfs.transactionservice.transaction.properties.TransactionProperties;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -19,9 +15,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TransactionService {
 
-    private final TransactionProperties transactionProperties;
-
     private final TransactionDataServiceClient client;
+    private final Pricing pricing;
+
+    private final List<TransactionValidator> transactionValidators;
+
 
     public Transaction getTransaction(Integer id) {
         try {
@@ -32,73 +30,10 @@ public class TransactionService {
     }
 
     public Transaction createTransaction(Transaction transaction) {
-        businessRules(transaction);
-        setCalculatedFields(transaction);
+        transactionValidators.forEach(transactionValidator -> transactionValidator.validate(transaction));
+        pricing.setCalculatedFields(transaction);
         return client.createTransaction(transaction);
     }
 
-    private void setCalculatedFields(Transaction transaction) {
-        transaction.setFees(calculateFee(transaction));
-        transaction.setAgentCommission(transaction.getFees() * transactionProperties.getAgentCommission());
-        transaction.setCommission(transaction.getFees() - transaction.getAgentCommission());
-        transaction.setStatus(TransactionStatus.NEW);
-    }
 
-    private void businessRules(Transaction transaction) {
-        validateSendingIsGreaterPayout(transaction);
-        validateSendingNotExceedsLimit(transaction.getSendingPrincipal());
-        validateSenderNotExceedsLimitByPeriod(transaction);
-        validateClientNotExceedsLimitOpenTransactions(transaction);
-    }
-
-    private void validateClientNotExceedsLimitOpenTransactions(Transaction transaction) {
-        List<Transaction> transactions =
-                client.getOpenTransactionsByUser(transaction.getSenderId(), TransactionStatus.NEW);
-        if (transactions.size() >= transactionProperties.getMaxOpenTransactions()) {
-            throw CLIENT_EXCEED_LIMIT_OPEN_TRANSACTIONS
-                    .withParameters(transactionProperties.getMaxOpenTransactions())
-                    .asException();
-        }
-    }
-
-    private void validateSenderNotExceedsLimitByPeriod(Transaction transaction) {
-        double sumAmounts = getTotalAmountsByPeriod(transaction.getSenderId()) + transaction.getSendingPrincipal();
-        if (sumAmounts > transactionProperties.getMaxTransactionByPeriod()) {
-            throw CLIENT_EXCEED_LIMIT_TO_SEND_IN_PERIOD
-                    .withParameters(transactionProperties.getMaxTransactionByPeriod(),
-                            transactionProperties.getDaysLimitByPeriod(), sumAmounts)
-                    .asException();
-        }
-    }
-
-    private double getTotalAmountsByPeriod(int senderId) {
-        List<Transaction> transactions = client.getTransactionsBySenderIdWithPeriod(senderId,
-                transactionProperties.getDaysLimitByPeriod());
-        return transactions.stream().mapToDouble(Transaction::getSendingPrincipal).sum();
-    }
-
-    private void validateSendingNotExceedsLimit(Double sendingPrincipal) {
-        if (sendingPrincipal > transactionProperties.getMaxTransactionValue()) {
-            throw TRANSACTION_EXCEEDS_SENDING_LIMIT
-                    .withParameters(sendingPrincipal)
-                    .asException();
-        }
-    }
-
-    private void validateSendingIsGreaterPayout(Transaction transaction) {
-        if (feeIsLessToMin(transaction)) {
-            throw MIN_FEE_IS_TOO_SMALL
-                    .withParameters(transaction.getSendingPrincipal(), transaction.getPayoutPrincipal(),
-                            transactionProperties.getMinFee())
-                    .asException();
-        }
-    }
-
-    private boolean feeIsLessToMin(Transaction transaction) {
-        return calculateFee(transaction) < transactionProperties.getMinFee();
-    }
-
-    private static double calculateFee(Transaction transaction) {
-        return transaction.getSendingPrincipal() - transaction.getPayoutPrincipal();
-    }
 }
