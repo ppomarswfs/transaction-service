@@ -54,4 +54,26 @@ public class TransactionController {
     public TransactionDto postTransaction(@Valid @RequestBody TransactionDto transactionDto) {
         return mapper.toDto(service.createTransaction(mapper.toModel(transactionDto)));
     }
+
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Success"),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Bad Request",
+                    content = @Content(
+                            mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content(
+                            mediaType = APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorDto.class)))
+    })
+    @PostMapping("/{transactionId}/payout")
+    public TransactionDto payout(@PathVariable Integer transactionId) {
+        return mapper.toDto(service.changeStatusPayout(transactionId));
+    }
 }

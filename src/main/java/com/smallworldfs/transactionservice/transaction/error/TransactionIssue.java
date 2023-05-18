@@ -21,7 +21,9 @@ public enum TransactionIssue implements Issue {
     CLIENT_EXCEED_LIMIT_TO_SEND_IN_PERIOD(
             "Client cannot has more than {0}$ in a given {1} days period. Now sender would has {2}$",
             DefaultIssueType.REQUEST_ERROR),
-            ;
+    TRANSACTION_WAS_PAYOUT("Transaction with id {0} was already payout.", DefaultIssueType.REQUEST_ERROR),
+    // TODO como hacer para que devuelva el 422? Que
+    ;
 
     private final String messageTemplate;
     private final IssueType type;

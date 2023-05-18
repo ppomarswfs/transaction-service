@@ -35,5 +35,7 @@ public class TransactionService {
         return client.createTransaction(transaction);
     }
 
-
+    public Transaction changeStatusPayout(Integer transactionId) {
+        return null;
+    }
 }

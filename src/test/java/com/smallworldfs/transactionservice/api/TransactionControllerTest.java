@@ -8,6 +8,7 @@ import static com.smallworldfs.transactionservice.transaction.error.TransactionI
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.MIN_FEE_IS_TOO_SMALL;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_EXCEEDS_SENDING_LIMIT;
 import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_NOT_FOUND;
+import static com.smallworldfs.transactionservice.transaction.error.TransactionIssue.TRANSACTION_WAS_PAYOUT;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -17,6 +18,7 @@ import com.smallworldfs.transactionservice.transaction.api.TransactionController
 import com.smallworldfs.transactionservice.transaction.api.mapper.TransactionDtoMapper;
 import com.smallworldfs.transactionservice.transaction.api.model.TransactionDto;
 import com.smallworldfs.transactionservice.transaction.entity.Transaction;
+import com.smallworldfs.transactionservice.transaction.entity.TransactionStatus;
 import com.smallworldfs.transactionservice.transaction.service.TransactionService;
 import java.io.IOException;
 import org.apache.commons.io.IOUtils;
@@ -208,6 +210,74 @@ public class TransactionControllerTest {
         private byte[] loadRequest(String path, String resource) throws IOException {
             return IOUtils.toByteArray(new ClassPathResource(path + resource).getInputStream());
         }
+    }
+
+    @Nested
+    class ChangeStatus {
+
+        @Test
+        void returns_404_when_transaction_not_exist() throws Exception {
+            int transactionId = 55;
+            whenTransactionIsQueriedThenThrowNotFoundException(transactionId);
+
+            ResultActions result = payoutController(transactionId);
+
+            result.andExpect(status().isNotFound())
+                    .andExpect(errorDto().hasMessage("Transaction with id 55 could be not found.")
+                            .hasType("NOT_FOUND")
+                            .hasCode("TRANSACTION_NOT_FOUND"));
+        }
+
+        @Test
+        void returns_400_when_transaction_was_payed() throws Exception {
+            int transactionId = 100;
+            whenTransactionIsQueriedThenReturnTransactionWithStatusPayout(transactionId);
+
+            ResultActions result = payoutController(transactionId);
+
+            result.andExpect(status().isBadRequest())
+                    .andExpect(errorDto().hasMessage("Transaction with id 100 was already payout.")
+                            .hasType("REQUEST_ERROR")
+                            .hasCode("TRANSACTION_WAS_PAYOUT"));
+        }
+
+        @Test
+        void returns_200_transaction_data_when_transaction_exist() throws Exception {
+            whenTransactionIsQueriedIdThenReturnTransaction(1, newTransaction());
+
+            payoutController(1)
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.transactionId", Matchers.equalTo(1)))
+                    .andExpect(jsonPath("$.sendingPrincipal", Matchers.equalTo(100.0)))
+                    .andExpect(jsonPath("$.payoutPrincipal", Matchers.equalTo(98.0)))
+                    .andExpect(jsonPath("$.fees", Matchers.equalTo(2.0)))
+                    .andExpect(jsonPath("$.commission", Matchers.equalTo(1.6)))
+                    .andExpect(jsonPath("$.agentCommission", Matchers.equalTo(0.4)))
+                    .andExpect(jsonPath("$.senderId", Matchers.equalTo(3)))
+                    .andExpect(jsonPath("$.beneficiaryId", Matchers.equalTo(4)))
+                    .andExpect(jsonPath("$.status", Matchers.equalTo("PAY_OUT")));
+        }
+
+        private void whenTransactionIsQueriedIdThenReturnTransaction(int id, Transaction transaction) {
+            transaction.setStatus(TransactionStatus.PAY_OUT);
+            when(service.changeStatusPayout(id)).thenReturn(transaction);
+        }
+
+        private void whenTransactionIsQueriedThenThrowNotFoundException(int transactionId) {
+            when(service.changeStatusPayout(transactionId))
+                    .thenThrow(TRANSACTION_NOT_FOUND.withParameters(transactionId).asException());
+        }
+
+        private void whenTransactionIsQueriedThenReturnTransactionWithStatusPayout(int transactionId) {
+            when(service.changeStatusPayout(transactionId))
+                    .thenThrow(TRANSACTION_WAS_PAYOUT.withParameters(transactionId).asException());
+        }
+
+        private ResultActions payoutController(int transactionId) throws Exception {
+            return mockMvc.perform(MockMvcRequestBuilders.post("/transactions/{transactionId}/payout", transactionId));
+        }
+
+
     }
 
 }
