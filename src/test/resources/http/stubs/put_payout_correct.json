@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "/transactions/1"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "transactionId": 1,
+      "sendingPrincipal": 100.0,
+      "payoutPrincipal": 98.0,
+      "fees": 2.0,
+      "commission": 1.6,
+      "agentCommission": 0.4,
+      "senderId": 3,
+      "beneficiaryId": 4,
+      "status": "PAY_OUT"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

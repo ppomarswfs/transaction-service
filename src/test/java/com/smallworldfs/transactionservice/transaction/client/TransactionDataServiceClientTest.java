@@ -97,4 +97,33 @@ class TransactionDataServiceClientTest {
         }
 
     }
+
+
+    @Nested
+    class Payout {
+
+        @Test
+        void throws_error_when_transaction_not_exist() {
+            Transaction transaction = newTransaction();
+            transaction.setTransactionId(55);
+            assertThrows(HttpException.NotFound.class,
+                    () -> client.payout(transaction.getTransactionId(), transaction));
+        }
+
+        @Test
+        void throws_error_when_transaction_was_payout() {
+            Transaction transaction = newTransaction();
+            transaction.setTransactionId(100);
+            assertThrows(HttpException.BadRequest.class,
+                    () -> client.payout(transaction.getTransactionId(), transaction));
+        }
+
+        @Test
+        void returns_transaction_when_server_returns_transaction_data() {
+            Transaction transaction = newTransaction();
+            transaction.setStatus(TransactionStatus.PAY_OUT);
+            Transaction transactionResponse = client.payout(transaction.getTransactionId(), transaction);
+            assertEquals(transaction, transactionResponse);
+        }
+    }
 }

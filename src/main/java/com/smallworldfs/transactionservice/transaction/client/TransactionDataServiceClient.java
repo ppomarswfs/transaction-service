@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(name = "transaction-data-service", url = "${transaction-data-service.url}")
@@ -22,8 +23,11 @@ public interface TransactionDataServiceClient {
     @GetMapping(value = "/transactions/client={userId}&status={status}", produces = MediaType.APPLICATION_JSON_VALUE)
     List<Transaction> getOpenTransactionsByUser(@PathVariable int userId, @PathVariable TransactionStatus status);
 
-
     @GetMapping(value = "/transactions/senderId={senderId}&days={lastDays}",
             produces = MediaType.APPLICATION_JSON_VALUE)
     List<Transaction> getTransactionsBySenderIdWithPeriod(@PathVariable int senderId, @PathVariable int lastDays);
+
+    @PutMapping(value = "/transactions/{transactionId}",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    Transaction payout(@PathVariable Integer transactionId, @RequestBody Transaction transaction);
 }

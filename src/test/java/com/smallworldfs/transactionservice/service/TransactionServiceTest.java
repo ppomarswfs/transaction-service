@@ -20,6 +20,7 @@ import com.smallworldfs.transactionservice.transaction.business.compliance.Trans
 import com.smallworldfs.transactionservice.transaction.business.pricing.Pricing;
 import com.smallworldfs.transactionservice.transaction.client.TransactionDataServiceClient;
 import com.smallworldfs.transactionservice.transaction.entity.Transaction;
+import com.smallworldfs.transactionservice.transaction.entity.TransactionStatus;
 import com.smallworldfs.transactionservice.transaction.properties.TransactionProperties;
 import com.smallworldfs.transactionservice.transaction.service.TransactionService;
 import org.junit.jupiter.api.Nested;
@@ -70,13 +71,7 @@ public class TransactionServiceTest {
             assertThat(transaction).isEqualTo(newTransaction());
         }
 
-        private void whenTransactionIsQueriedThenThrowNotFound() {
-            when(client.getTransaction(55)).thenThrow(MockHttpException.notFound());
-        }
 
-        private void whenTransactionIsQueriedThenReturnTransaction(Transaction transaction) {
-            when(client.getTransaction(1)).thenReturn(transaction);
-        }
     }
 
     @Nested
@@ -106,8 +101,65 @@ public class TransactionServiceTest {
 
             assertEquals(newTransaction(), transaction);
         }
+    }
 
+    @Nested
+    class Payout {
 
+        @Test
+        void throws_transaction_not_found_when_client_returns_404() {
+            whenTransactionIsQueriedThenThrowNotFound();
+
+            ApplicationException exception =
+                    assertThrows(ApplicationException.class, () -> service.changeStatusPayout(55));
+
+            assertThat(exception).hasMessage("Transaction with id 55 could be not found.")
+                    .returns(NOT_FOUND, e -> e.getIssue().getType());
+        }
+
+        @Test
+        void throws_error_when_transaction_was_payout() {
+            whenTransactionIsQueriedThenReturnTransactionWithPayoutStatus();
+
+            ApplicationException exception =
+                    assertThrows(ApplicationException.class, () -> service.changeStatusPayout(100));
+
+            assertThat(exception).hasMessage("Transaction with id 100 was already payout.")
+                    .returns(REQUEST_ERROR, e -> e.getIssue().getType());
+        }
+
+        @Test
+        void returns_transaction_data_when_with_status_payout_when_transaction_is_correct() {
+            Transaction transactionRequested = newTransaction();
+            whenTransactionIsQueriedThenReturnTransaction(transactionRequested);
+            whenTransactionIsPayoutThenReturnTransactionWithPayoutStatus();
+
+            Transaction transaction = service.changeStatusPayout(1);
+
+            transactionRequested.setStatus(TransactionStatus.PAY_OUT);
+            assertThat(transaction).isEqualTo(transactionRequested);
+        }
+
+        private void whenTransactionIsQueriedThenReturnTransactionWithPayoutStatus() {
+            Transaction transaction = newTransaction();
+            transaction.setStatus(TransactionStatus.PAY_OUT);
+            when(client.getTransaction(100)).thenReturn(transaction);
+        }
+
+        private void whenTransactionIsPayoutThenReturnTransactionWithPayoutStatus() {
+            Transaction transaction = newTransaction();
+            transaction.setStatus(TransactionStatus.PAY_OUT);
+            when(client.payout(transaction.getTransactionId(), transaction)).thenReturn(transaction);
+        }
+
+    }
+
+    private void whenTransactionIsQueriedThenThrowNotFound() {
+        when(client.getTransaction(55)).thenThrow(MockHttpException.notFound());
+    }
+
+    private void whenTransactionIsQueriedThenReturnTransaction(Transaction transaction) {
+        when(client.getTransaction(1)).thenReturn(transaction);
     }
 
 }
